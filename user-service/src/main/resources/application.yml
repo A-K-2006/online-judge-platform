@@ -1,0 +1,29 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/online_judge}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: users
+  flyway:
+    enabled: true
+    schemas: users
+    locations: classpath:db/migration
+
+jwt:
+  secret: ${JWT_SECRET:YourSuperSecretKeyForJwtTokenGenerationThatIsAtLeast256BitsLong!!}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

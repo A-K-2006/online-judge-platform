@@ -1,0 +1,32 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: problem-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/online_judge}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: problems
+    show-sql: false
+  flyway:
+    enabled: true
+    schemas: problems
+    locations: classpath:db/migration
+
+jwt:
+  secret: ${JWT_SECRET:YourSuperSecretKeyForJwtTokenGenerationThatIsAtLeast256BitsLong!!}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

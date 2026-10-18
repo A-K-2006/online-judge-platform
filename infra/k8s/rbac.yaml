@@ -1,0 +1,33 @@
+# Service Account for execution-service to create K8s Jobs
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: execution-sa
+  namespace: online-judge
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: job-creator
+  namespace: online-judge
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: execution-sa-job-creator
+  namespace: online-judge
+subjects:
+  - kind: ServiceAccount
+    name: execution-sa
+    namespace: online-judge
+roleRef:
+  kind: Role
+  name: job-creator
+  apiGroup: rbac.authorization.k8s.io

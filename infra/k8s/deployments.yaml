@@ -1,0 +1,326 @@
+# --- API Gateway ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: online-judge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: ACR_NAME.azurecr.io/api-gateway:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: AUTH_SERVICE_URL
+              value: http://auth-service:8081
+            - name: USER_SERVICE_URL
+              value: http://user-service:8082
+            - name: PROBLEM_SERVICE_URL
+              value: http://problem-service:8083
+            - name: SUBMISSION_SERVICE_URL
+              value: http://submission-service:8084
+          resources:
+            requests: { memory: "256Mi", cpu: "200m" }
+            limits: { memory: "512Mi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8080 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: online-judge
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+# --- Auth Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: online-judge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: ACR_NAME.azurecr.io/auth-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: host }
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: username }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: password }
+            - name: DB_NAME
+              value: online_judge
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: app-secrets, key: jwt-secret }
+          resources:
+            requests: { memory: "512Mi", cpu: "250m" }
+            limits: { memory: "1Gi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8081 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: online-judge
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+# --- User Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: online-judge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: ACR_NAME.azurecr.io/user-service:latest
+          ports:
+            - containerPort: 8082
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: host }
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: username }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: password }
+            - name: DB_NAME
+              value: online_judge
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: app-secrets, key: jwt-secret }
+          resources:
+            requests: { memory: "512Mi", cpu: "250m" }
+            limits: { memory: "1Gi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8082 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: online-judge
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+# --- Problem Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: problem-service
+  namespace: online-judge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: problem-service
+  template:
+    metadata:
+      labels:
+        app: problem-service
+    spec:
+      containers:
+        - name: problem-service
+          image: ACR_NAME.azurecr.io/problem-service:latest
+          ports:
+            - containerPort: 8083
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: host }
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: username }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: password }
+            - name: DB_NAME
+              value: online_judge
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: app-secrets, key: jwt-secret }
+          resources:
+            requests: { memory: "512Mi", cpu: "250m" }
+            limits: { memory: "1Gi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8083 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: problem-service
+  namespace: online-judge
+spec:
+  selector:
+    app: problem-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+---
+# --- Submission Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: submission-service
+  namespace: online-judge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: submission-service
+  template:
+    metadata:
+      labels:
+        app: submission-service
+    spec:
+      containers:
+        - name: submission-service
+          image: ACR_NAME.azurecr.io/submission-service:latest
+          ports:
+            - containerPort: 8084
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: host }
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: username }
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: db-secrets, key: password }
+            - name: DB_NAME
+              value: online_judge
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef: { name: redis-secrets, key: host }
+            - name: PROBLEM_SERVICE_URL
+              value: http://problem-service:8083
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: app-secrets, key: jwt-secret }
+          resources:
+            requests: { memory: "512Mi", cpu: "250m" }
+            limits: { memory: "1Gi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8084 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: submission-service
+  namespace: online-judge
+spec:
+  selector:
+    app: submission-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+---
+# --- Execution Service ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: execution-service
+  namespace: online-judge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: execution-service
+  template:
+    metadata:
+      labels:
+        app: execution-service
+    spec:
+      serviceAccountName: execution-sa
+      containers:
+        - name: execution-service
+          image: ACR_NAME.azurecr.io/execution-service:latest
+          ports:
+            - containerPort: 8085
+          env:
+            - name: REDIS_HOST
+              valueFrom:
+                secretKeyRef: { name: redis-secrets, key: host }
+            - name: EXECUTION_NAMESPACE
+              value: online-judge
+          resources:
+            requests: { memory: "512Mi", cpu: "250m" }
+            limits: { memory: "1Gi", cpu: "500m" }
+          readinessProbe:
+            httpGet: { path: /actuator/health, port: 8085 }
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: execution-service
+  namespace: online-judge
+spec:
+  selector:
+    app: execution-service
+  ports:
+    - port: 8085
+      targetPort: 8085

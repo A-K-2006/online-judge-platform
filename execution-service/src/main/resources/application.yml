@@ -1,0 +1,23 @@
+server:
+  port: 8085
+spring:
+  application:
+    name: execution-service
+  data:
+    redis:
+      host: ${REDIS_HOST:honest-eel-303689.upstash.io}
+      port: ${REDIS_PORT:6379}
+      username: ${REDIS_USERNAME:default}
+      password: ${REDIS_PASSWORD:gQAAAAAABKJJAAIgcDFkZjA1ZjQ3ZjM4ZGM0NzYxYjViOGZiYTNkOTU1MWMwZQ}
+      ssl:
+        enabled: true
+      timeout: 5000ms
+      connect-timeout: 5000ms
+execution:
+  namespace: ${EXECUTION_NAMESPACE:online-judge}
+  runner-image: ${RUNNER_IMAGE:onlinejudge/code-runner:latest}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
